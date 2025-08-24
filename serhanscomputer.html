@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serhan's Computer</title>
+  <style type="text/css">
+    /* Base reset */
+    html, body { height: 100%; margin: 0; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: #101010; }
+
+    /* Windows-like look */
+    .hidden { display: none; }
+    .fullscreen { position: fixed; inset: 0; }
+    .center { display: flex; align-items: center; justify-content: center; }
+
+    /* Lock screen */
+    #lockScreen { background: url("Photos/Ortakoy Buyuk Mecidiye Mosque.png") center/cover no-repeat fixed; flex-direction: column; gap: 16px; }
+    #lockGlass { background: rgba(0,0,0,0.45); padding: 24px 28px; border-radius: 12px; width: 320px; color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+    #lockGlass h1 { margin: 0 0 12px 0; font-weight: 600; font-size: 22px; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+    .field label { font-size: 12px; color: #dcdcdc; }
+    .field input { padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25); background: rgba(0,0,0,0.35); color: #fff; outline: none; }
+    .btn { appearance: none; border: none; background: #0a5fff; color: #fff; padding: 10px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    .btn:disabled { background: #3a3a3a; cursor: not-allowed; }
+    #lockError { color: #ffb4b4; font-size: 12px; min-height: 16px; }
+    #lockHeaderClock { position: absolute; top: 24px; right: 24px; color: #fff; font-weight: 600; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+
+    /* Desktop */
+    #desktop { background: url("Photos/Ortakoy Buyuk Mecidiye Mosque.png") center/cover no-repeat fixed; }
+    #desktopOverlay { position: absolute; inset: 0; background: rgba(0,0,0,0.25); pointer-events: none; }
+    #icons { position: absolute; top: 24px; left: 24px; display: grid; grid-template-columns: repeat(4, 96px); gap: 18px; }
+    .icon { width: 96px; height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,0.7); cursor: pointer; user-select: none; }
+    .icon img { width: 44px; height: 44px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+    .icon span { font-size: 13px; text-align: center; }
+
+    /* Taskbar */
+    #taskbar { position: fixed; left: 0; right: 0; bottom: 0; height: 44px; background: rgba(20,20,20,0.86); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; color: #eaeaea; border-top: 1px solid rgba(255,255,255,0.06); }
+    #taskLeft { display: flex; align-items: center; gap: 8px; }
+    #startBtn { height: 30px; padding: 0 10px; border-radius: 4px; background: #2b2b2b; color: #fff; border: 1px solid #3a3a3a; cursor: pointer; }
+    #taskApps { display: flex; align-items: center; gap: 8px; }
+    .taskApp { height: 30px; padding: 0 10px; border-radius: 4px; background: #353535; color: #fff; border: 1px solid #4a4a4a; display: none; align-items: center; }
+    #clock { font-variant-numeric: tabular-nums; }
+
+    /* Window */
+    .win { position: fixed; top: 80px; left: 80px; width: 720px; height: 480px; background: #1e1e1e; color: #e8e8e8; border: 1px solid #3a3a3a; border-radius: 8px; overflow: hidden; display: none; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+    .winHeader { height: 40px; background: #2b2b2b; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; border-bottom: 1px solid #3a3a3a; }
+    .winTitle { font-weight: 600; }
+    .winBtns { display: flex; gap: 6px; }
+    .wbtn { width: 28px; height: 24px; border: 1px solid #4a4a4a; background: #3a3a3a; color: #fff; border-radius: 4px; cursor: pointer; }
+    .winBody { height: calc(100% - 40px); background: #202020; display: flex; }
+    .sidebar { width: 200px; border-right: 1px solid #3a3a3a; background: #252525; padding: 10px; }
+    .content { flex: 1; padding: 12px; overflow: auto; }
+    .list { list-style: none; padding: 0; margin: 0; }
+    .list li { padding: 8px; border-radius: 6px; cursor: pointer; }
+    .list li:hover, .list li.active { background: #333; }
+    .list li svg { width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; opacity: 0.9; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+    .tile { background: #2b2b2b; border: 1px solid #3b3b3b; border-radius: 8px; padding: 10px; cursor: pointer; }
+    .muted { color: #bdbdbd; }
+    .error { color: #ff9c9c; }
+    .crumbs { margin-bottom: 8px; font-size: 12px; color: #bdbdbd; }
+    .crumbs span { cursor: pointer; color: #e0e0e0; }
+    .crumbs .sep { margin: 0 6px; color: #999; }
+    .fileView { white-space: pre; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; background: #181818; border: 1px solid #333; border-radius: 8px; padding: 12px; }
+    .docEmbed { width: 100%; height: 360px; border: 0; background: #111; }
+
+    /* Mail styles */
+    .mailList { width: 220px; border-right: 1px solid #3a3a3a; overflow: auto; }
+    .mailItem { padding: 10px; border-bottom: 1px solid #333; cursor: pointer; }
+    .mailItem:hover { background: #2d2d2d; }
+    .mailView { padding: 12px; white-space: pre-wrap; }
+
+    /* Notes formatting */
+    .notesDay { margin-bottom: 16px; }
+    .notesDayTitle { font-weight: 600; margin-bottom: 6px; }
+
+    /* Photos carousel */
+    .photoViewer { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; background: #111; }
+    .photoViewer img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .navBtn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.55); color: #fff; border: 1px solid #555; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+    .navLeft { left: 10px; }
+    .navRight { right: 10px; }
+  </style>
+</head>
+<body>
+  <!-- Lock Screen -->
+  <div id="lockScreen" class="fullscreen center">
+    <div id="lockHeaderClock"></div>
+    <div id="lockGlass">
+      <h1>Welcome</h1>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" autocomplete="off" placeholder="Serhan Ekim">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="off" placeholder="••••">
+      </div>
+      <div id="lockError"></div>
+      <button id="unlockBtn" class="btn">Sign in</button>
+    </div>
+  </div>
+
+  <!-- Desktop -->
+  <div id="desktop" class="fullscreen hidden">
+    <div id="desktopOverlay"></div>
+    <div id="icons">
+      <div class="icon" data-app="music">
+        <img alt="Music" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M12 3v10.55a4 4 0 1 1-2-3.45V7h8V3h-6z'/%3E%3C/svg%3E">
+        <span>Music</span>
+      </div>
+      <div class="icon" data-app="mail">
+        <img alt="Mail" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M20 4H4a2 2 0 0 0-2 2v12l6-4h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z'/%3E%3C/svg%3E">
+        <span>Mail</span>
+      </div>
+      <div class="icon" data-app="notes">
+        <img alt="Notes" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M4 3h14a2 2 0 0 1 2 2v9l-5 5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z'/%3E%3C/svg%3E">
+        <span>Notes</span>
+      </div>
+      <div class="icon" data-app="photos">
+        <img alt="Photos" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M21 19V5a2 2 0 0 0-2-2H5C3.89 3 3 3.89 3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'/%3E%3C/svg%3E">
+        <span>Photos</span>
+      </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div id="taskbar">
+      <div id="taskLeft">
+        <button id="startBtn">Start</button>
+        <div id="taskApps">
+          <div id="task-music" class="taskApp">Music</div>
+          <div id="task-mail" class="taskApp">Mail</div>
+          <div id="task-notes" class="taskApp">Notes</div>
+          <div id="task-photos" class="taskApp">Photos</div>
+        </div>
+      </div>
+      <div id="clock"></div>
+    </div>
+  </div>
+
+  <!-- Music Window -->
+  <div id="win-music" class="win">
+    <div class="winHeader"><div class="winTitle">Music</div><div class="winBtns"><button class="wbtn" data-close="music">×</button></div></div>
+    <div class="winBody">
+      <div class="sidebar">
+        <ul class="list">
+          <li class="active" data-music="root">Folders</li>
+        </ul>
+      </div>
+      <div class="content">
+        <div id="musicCrumbs" class="crumbs"></div>
+        <div id="musicGrid" class="grid"></div>
+        <div id="musicFile" class="fileView hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mail Window -->
+  <div id="win-mail" class="win">
+    <div class="winHeader"><div class="winTitle">Mail</div><div class="winBtns"><button class="wbtn" data-close="mail">×</button></div></div>
+    <div class="winBody">
+      <div class="sidebar">
+        <ul id="mailFolders" class="list">
+          <li class="active" data-folder="Inbox"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ddd"><path d="M20 4H4a2 2 0 0 0-2 2v12l6-4h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/></svg>Inbox</li>
+          <li data-folder="Sent"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ddd"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>Sent</li>
+          <li data-folder="Spam"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ddd"><path d="M19 3H5L2 8l10 13L22 8l-3-5zM7.5 8h9l1.5 2.5L12 18 6 10.5 7.5 8z"/></svg>Spam</li>
+        </ul>
+      </div>
+      <div class="mailList" id="mailList"></div>
+      <div class="content mailView" id="mailView">Select a message</div>
+    </div>
+  </div>
+
+  <!-- Notes Window -->
+  <div id="win-notes" class="win">
+    <div class="winHeader"><div class="winTitle">Notes</div><div class="winBtns"><button class="wbtn" data-close="notes">×</button></div></div>
+    <div class="winBody">
+      <div class="sidebar">
+        <ul class="list">
+          <li class="active">Items</li>
+        </ul>
+      </div>
+      <div class="content">
+        <div class="grid">
+          <div class="tile" id="confidentialTile">Confidential</div>
+          <div class="tile" id="thoughtsTile">thoughts.txt</div>
+        </div>
+        <div id="notesArea" class="muted" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Photos Window -->
+  <div id="win-photos" class="win">
+    <div class="winHeader"><div class="winTitle">Photos</div><div class="winBtns"><button class="wbtn" data-close="photos">×</button></div></div>
+    <div class="winBody">
+      <div class="sidebar">
+        <ul class="list"><li class="active">Gallery</li></ul>
+      </div>
+      <div class="content">
+        <div id="photosGrid" class="grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      const $ = (sel) => document.querySelector(sel);
+      const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+      // Lock screen logic
+      const lockScreen = $('#lockScreen');
+      const desktop = $('#desktop');
+      const lockError = $('#lockError');
+      const username = $('#username');
+      const password = $('#password');
+      const unlockBtn = $('#unlockBtn');
+      const lockHeaderClock = $('#lockHeaderClock');
+
+      username.value = 'Serhan Ekim';
+
+      function updateClocks() {
+        const now = new Date();
+        const opts = { hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: 'short', year: 'numeric' };
+        const uk = new Intl.DateTimeFormat('en-GB', opts).format(now);
+        $('#clock').textContent = uk;
+        if (lockHeaderClock) lockHeaderClock.textContent = uk;
+      }
+      updateClocks();
+      setInterval(updateClocks, 1000);
+
+      function signIn() {
+        const u = (username.value || '').trim();
+        const p = password.value || '';
+        if (u !== 'Serhan Ekim' || p !== '1104') {
+          lockError.textContent = 'Incorrect username or password.';
+          return;
+        }
+        lockError.textContent = '';
+        lockScreen.classList.add('hidden');
+        desktop.classList.remove('hidden');
+      }
+      unlockBtn.addEventListener('click', signIn);
+      password.addEventListener('keydown', (e) => { if (e.key === 'Enter') signIn(); });
+
+      // Desktop icons open windows
+      const appWindows = {
+        music: $('#win-music'),
+        mail: $('#win-mail'),
+        notes: $('#win-notes'),
+        photos: $('#win-photos')
+      };
+      const taskMap = {
+        music: $('#task-music'),
+        mail: $('#task-mail'),
+        notes: $('#task-notes'),
+        photos: $('#task-photos')
+      };
+      function openApp(app) {
+        const w = appWindows[app];
+        if (!w) return;
+        w.style.display = 'block';
+        taskMap[app].style.display = 'flex';
+      }
+      function closeApp(app) {
+        const w = appWindows[app];
+        if (!w) return;
+        w.style.display = 'none';
+        taskMap[app].style.display = 'none';
+      }
+      $$('#icons .icon').forEach(el => el.addEventListener('click', () => openApp(el.dataset.app)));
+      $$('.wbtn').forEach(btn => btn.addEventListener('click', () => closeApp(btn.getAttribute('data-close'))));
+
+      // Notes implementation
+      const thoughtsBlocks = [
+        { title: '10 March – 23:01 PM', body: `There’s something uniquely cruel about writing music for ears that no longer listen. They say genius is often misunderstood. I think it’s just lonely.` },
+        { title: '11 March – 01:32 AM', body: `I no longer trust my hands. They shake at rest, but hold perfectly still when playing. As if the violin is the only thing keeping me from disintegrating.` },
+        { title: '11 March – 03:40 AM', body: `I saw her again today, in the lobby. She didn’t look. That hurts more than if she had screamed at me. At least anger is music. Indifference is silence.` },
+        { title: '11 March – 07:08 AM', body: `They want the piece. Not the truth. Just the elegance of a lie bound in G major. But I’ve hidden it. Inside the melody. Inside what they don’t hear.` },
+        { title: '11 March – 18:22 PM', body: `Melis used to write everything down. She once told me: “If it’s not in the journal, it never happened.”\nI suppose that’s why I read it.\nNot because I wanted to hurt her. I just needed to know… if I had ever really happened.` },
+        { title: '11 March – 23:56 PM', body: `Kenan would understand. He always knew how to disappear from a room without leaving. Now I wonder if I did to him what I did to her.\nWhat’s worse? Being forgotten or being remembered wrong?` },
+        { title: '12 March – 01:00 AM', body: `The recorder is still in the drawer. Maybe I’ll leave it running tonight. Maybe it can say what I won’t.` },
+        { title: '12 March 2024 – 01:48 AM', body: `I keep wondering when the silence became easier than the sound.\nAt some point, the music stopped being mine. It began to echo with voices I no longer recognise — a girl with trembling hands, a poet with wounded pride, a brother I stopped listening to.\n\nEvery composer fears silence. But silence is honest.\n\nI used to believe that control was everything. That if I arranged the notes precisely enough, I could keep life from unraveling. But pain leaks. Through rests, through pauses, through every unresolved chord.\n\nMy work ends here.\nEverything I am ends with one word.\nA word that belongs to no one but me.\nMy final note.` },
+        { title: '12 March – 10:12 AM', body: `If someone is reading this, it means I’m either gone or someone forced their way in.\n\nI didn’t steal. I composed. I remembered. I loved.\n\nWhatever they say, I did not fall. I was pushed.\nIf not by someone, then by what I became.` }
+      ];
+
+      function renderThoughts() {
+        const container = document.createElement('div');
+        const header = document.createElement('div');
+        header.className = 'muted';
+        header.textContent = 'File: thoughts.txt\nLocation: Desktop\nOwner: Serhan Ekim\n\n---';
+        container.appendChild(header);
+        thoughtsBlocks.forEach(block => {
+          const day = document.createElement('div');
+          day.className = 'notesDay';
+          const t = document.createElement('div');
+          t.className = 'notesDayTitle';
+          t.textContent = block.title;
+          const b = document.createElement('div');
+          b.textContent = block.body;
+          day.appendChild(t);
+          day.appendChild(b);
+          container.appendChild(day);
+        });
+        const footer = document.createElement('div');
+        footer.className = 'muted';
+        footer.textContent = '---\n\n[End of file]';
+        container.appendChild(footer);
+        const notesArea = document.getElementById('notesArea');
+        notesArea.innerHTML = '';
+        notesArea.appendChild(container);
+      }
+
+      document.getElementById('thoughtsTile').addEventListener('click', renderThoughts);
+      $('#confidentialTile').addEventListener('click', () => {
+        const notesArea = document.getElementById('notesArea');
+        notesArea.innerHTML = '';
+        const header = document.createElement('div');
+        header.className = 'muted';
+        header.textContent = 'Confidential';
+        const embed = document.createElement('iframe');
+        embed.className = 'docEmbed';
+        embed.src = 'Notes/Confidential/recovered_audio_transcript.pdf';
+        notesArea.appendChild(header);
+        notesArea.appendChild(embed);
+      });
+
+      // Mail implementation: embedded data from project Mail folder
+      const mailListEl = $('#mailList');
+      const mailViewEl = $('#mailView');
+      const mailFoldersEl = $('#mailFolders');
+      let currentFolder = 'Inbox';
+      let mailCache = {};
+
+      const MAIL_DATA = {
+        Inbox: [
+          { name: 'From_CoffeeClub_2024_03_02.txt', text: `From: CoffeeClub <hello@coffeeclub.co.uk>\nTo: Serhan Ekim <s.ekim@composer.org>\nDate: 2 March 2024\nSubject: Your beans are on the way!\n\nDear Serhan,\n\nYour monthly coffee subscription has shipped!\n\nThis month’s selection includes:\n- Tanzanian Peaberry Dark Roast  \n- Colombian Honey-Washed Arabica  \n\nWe hope the aroma inspires your next masterpiece.\n\n– CoffeeClub Roastery` },
+          { name: 'From_Finance_2024_03_05.txt', text: `From: Finance Department <finance@classicalistanbul.com>\nTo: Serhan Ekim <s.ekim@composer.org>\nDate: 5 March 2024\nSubject: Payment Reminder – Overdue Invoice\n\nDear Mr. Ekim,\n\nThis is a polite reminder that your invoice dated 1 February 2024 (INV-732) is still outstanding. \n\nPlease arrange for payment as soon as possible. Let us know if there are any issues.\n\nRegards,  \nAccounts` },
+          { name: 'From_Nevin_2024_02_28.txt', text: `From: Nevin <nevin_altay@academia.tr>\nTo: Serhan Ekim <s.ekim@composer.org>\nDate: 28 February 2024\nSubject: Can you still recommend that piano technician?\n\nHi Serhan,\n\nHope you're doing okay. I remembered you mentioned a great piano tuner once, and my Bösendorfer is acting up again.\n\nDo you still have his number?\n\nBest,  \nNevin` },
+          { name: 'From_Selin_2024_03_07.txt', text: `From: Selin Aral <s.aral@contempo.org>\nTo: Serhan Ekim <s.ekim@composer.org>\nDate: 7 March 2024\nSubject: Just checking in\n\nHey Serhan,\n\nI haven’t seen you at rehearsal for a while. Everything okay?\n\nKenan seemed worried the other day. Something about your last call. I don’t want to pry — just checking in.\n\nLet me know if you need anything.\n\n- S` },
+          { name: 'From_StreamingService_2024_03_06.txt', text: `From: StreamNow Weekly <updates@streamnow.com>\nTo: Serhan Ekim <s.ekim@composer.org>\nDate: 6 March 2024\nSubject: Your Weekly Watchlist is Ready!\n\nHi Serhan,\n\nBased on your recent views, we've curated a fresh list of musical documentaries and true crime dramas for you this week.\n\n🎻 "Strings of the Soul" – A look at modern classical composition  \n🔍 "Cracked Silence" – A chilling murder in Vienna's opera house  \n🎬 And more...\n\nEnjoy the silence... or break it.\n\n– The StreamNow Team` },
+          { name: 'From_Tuna_2024_03_03.txt', text: `From: Tuna Arda <t.arda@academy.tr>\nTo: Serhan Ekim <s.ekim@composer.org>\nDate: 3 March 2024\nSubject: You need to stop\n\nSerhan,\n\nYou need to stop working on the piece. You know exactly why. We all do.\n\nIf you publish it as is, there will be consequences. Kenan’s work was never yours to use. Especially not now.\n\nThis isn’t about legacy anymore. It’s about respect.\n\nT.` }
+        ],
+        Sent: [
+          { name: 'To_Kenan_2024_03_01.txt', text: `From: Serhan Ekim <s.ekim@composer.org>\nTo: Kenan Yılmaz <kenan.y@poetryunion.tr>\nDate: 1 March 2024\nSubject: Just listen\n\nKenan,\n\nYou’ll hear it in the second movement. I didn’t use your words exactly — I translated them. Into the only language I have left.\n\nI gave you credit in the way I know best.\n\nYou always said silence speaks.  \nWell, this time it sings.\n\n– S` },
+          { name: 'To_Melis_Draft.txt', text: `Subject: I was wrong.\n\nMelis,\n\nI know you didn’t want to hear from me. I promised I would respect your silence, but I broke that promise — in more ways than one.\n\nI read it. Your journal.\n\nI told myself it was for closure, to understand the distance. But that’s not true. I read it because I missed you. Because it felt like the only way left to speak to you without you running.\n\nPage by page, I could feel you slipping away. But somewhere between the entries I thought… maybe I could still fix it. Even if it wasn’t mine to fix.\n\nYou wrote that I see people as compositions. I suppose I do. But you were never a piece to be perfected. You were the only thing I could never finish.\n\nYou don’t have to forgive me. I just wanted you to know that I saw you. In every note, in every silence between the lines.\n\nI don’t know if I’ll send this.\n\n- S` },
+          { name: 'To_Selin_2024_03_02.txt', text: `From: Serhan Ekim <s.ekim@composer.org>\nTo: Selin Aral <s.aral@contempo.org>\nDate: 2 March 2024\nSubject: Re: Rehearsals\n\nSelin,\n\nThanks for the message. I’ll be back soon. I just need to finish something first.\n\nIt’s loud in my head right now. Too loud for anything else.\n\n– S` }
+        ],
+        Spam: []
+      };
+
+      async function loadFolder(folder) {
+        currentFolder = folder;
+        mailListEl.innerHTML = '';
+        mailViewEl.textContent = 'Select a message';
+        const files = MAIL_DATA[folder] || [];
+        const entries = files.map(({ name, text }) => {
+          const firstLine = (text.split(/\r?\n/).find(l => l.trim().length) || '').slice(0, 80);
+          return { name, text, preview: firstLine };
+        });
+        mailCache[folder] = entries;
+        renderMailList(entries);
+      }
+
+      function renderMailList(entries) {
+        mailListEl.innerHTML = '';
+        entries.forEach((e, idx) => {
+          const div = document.createElement('div');
+          div.className = 'mailItem';
+          div.textContent = e.name + ' — ' + e.preview;
+          div.addEventListener('click', () => {
+            mailViewEl.textContent = e.text;
+          });
+          mailListEl.appendChild(div);
+        });
+      }
+
+      mailFoldersEl.addEventListener('click', (ev) => {
+        const li = ev.target.closest('li[data-folder]');
+        if (!li) return;
+        $$('#mailFolders li').forEach(x => x.classList.remove('active'));
+        li.classList.add('active');
+        const folder = li.getAttribute('data-folder');
+        if (mailCache[folder]) {
+          renderMailList(mailCache[folder]);
+        } else {
+          loadFolder(folder);
+        }
+      });
+      // Preload Inbox when Mail opens
+      $('#win-mail').addEventListener('transitionend', () => {});
+      // Load on first open
+      let mailLoaded = false;
+      function ensureMailLoaded() {
+        if (mailLoaded) return;
+        mailLoaded = true;
+        loadFolder('Inbox');
+      }
+      $('#task-mail').addEventListener('click', () => { openApp('mail'); ensureMailLoaded(); });
+      $('[data-app="mail"]').addEventListener('click', () => { openApp('mail'); ensureMailLoaded(); });
+      $('#win-mail').addEventListener('mouseenter', ensureMailLoaded, { once: true });
+
+      // Photos implementation: build from Photos directory file list
+      const photoNames = [
+        'Arnavutkoy.png',
+        'Bahcekapi.png',
+        'Dinner.png',
+        'Galata from Istanbul Modern.png',
+        'Galata Mawlavi House.png',
+        'Galata Tower.png',
+        'Kariye Turbesi St.png',
+        'Kirim Church.png',
+        'Luleci Hendek St.png',
+        'Ortakoy Buyuk Mecidiye Mosque.png',
+        'Palace of the Porphyrogenitus.png',
+        'Sariyer.png',
+        'Sultanahmet.png',
+        'The Chora.png',
+        'View from Galata Tower.png'
+      ];
+      const photosGrid = $('#photosGrid');
+      function renderPhotosGrid() {
+        photosGrid.innerHTML = '';
+        photoNames.forEach((name, idx) => {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          tile.innerHTML = `<div class="muted" style="margin-bottom:6px;">${name}</div><img alt="${name}" src="Photos/${encodeURIComponent(name)}" style="width:100%;height:100px;object-fit:cover;border-radius:6px;"/>`;
+          tile.addEventListener('click', () => openPhotoViewer(idx));
+          photosGrid.appendChild(tile);
+        });
+      }
+      renderPhotosGrid();
+
+      function openPhotoViewer(startIndex) {
+        const viewer = document.createElement('div');
+        viewer.className = 'photoViewer';
+        const img = document.createElement('img');
+        let index = startIndex;
+        function show() { img.src = 'Photos/' + encodeURIComponent(photoNames[index]); }
+        const left = document.createElement('button'); left.className = 'navBtn navLeft'; left.textContent = '◀';
+        const right = document.createElement('button'); right.className = 'navBtn navRight'; right.textContent = '▶';
+        left.addEventListener('click', () => { index = (index - 1 + photoNames.length) % photoNames.length; show(); });
+        right.addEventListener('click', () => { index = (index + 1) % photoNames.length; show(); });
+        viewer.appendChild(left); viewer.appendChild(right); viewer.appendChild(img);
+        const photosWin = $('#win-photos .content');
+        photosWin.innerHTML = '';
+        photosWin.appendChild(viewer);
+        show();
+      }
+
+      // Open app from taskbar button
+      Object.keys(taskMap).forEach(app => taskMap[app].addEventListener('click', () => openApp(app)));
+
+      // Music: embed structure from project
+      const MUSIC_DATA = {
+        name: 'root', type: 'folder', children: [
+          { name: 'New Song Ideas', type: 'folder', children: [
+            { name: 'Opus Mavi', type: 'folder', children: [
+              { name: 'the_final_note.txt', type: 'file', content: `Title: The Final Note\nComposer: S. E.\nKey: D minor\nTime Signature: 4/4\nTempo: Adagio (♩ = 66)\nInstrumentation: Solo Piano\n\n[Measure 1]    P - G     D     Bb\tC\n[Measure 2]    A - E     A     F\tG\n[Measure 3]    C - E     G     D\t(rest)\n[Measure 4]    S - D     F     E\tC\n[Measure 5]    R - A     G     F\t(rest)\n[Measure 6]    S - A     A     D\tC\n[Measure 7]    I - E     B     D\tG\n[Measure 8]    G - G     F     E\t(rest)\n[Measure 9]    S - C     E     F\tE\n[Measure 10]   F - D     A     Bb\tC \n[Measure 11]   I - F     E     D\tA\n[Measure 12]   G - B     D     F\t(rest)\n[Measure 13]   N - A     C     D\tA\n[Measure 14]   B - E     G     G\t(rest)\n[Measure 15]   A - G     A     A    \tE\n[Measure 16]   L - D     C     Bb\tD\n[Measure 17]   N - F     A     G\tC\n[Measure 18]   O - E     D     A\tB\n[Measure 19]   T - A     G     G\tF\n[Measure 20]   E - D     C     B\tA\n\n\nLyrics beneath final bar:\n"Only those who read the first note of every bar\nwill hear what silence says."` }
+            ]}
+          ]},
+          { name: 'Next Concerts', type: 'folder', children: [] }
+        ]
+      };
+
+      const musicGrid = document.getElementById('musicGrid');
+      const musicCrumbs = document.getElementById('musicCrumbs');
+      const musicFile = document.getElementById('musicFile');
+      let musicPath = [];
+
+      function getNode(path) {
+        let node = MUSIC_DATA;
+        for (const segment of path) {
+          if (!node.children) break;
+          node = node.children.find(c => c.name === segment) || node;
+        }
+        return node;
+      }
+
+      function renderMusic() {
+        const node = getNode(musicPath);
+        // Breadcrumbs
+        musicCrumbs.innerHTML = '';
+        const rootSpan = document.createElement('span');
+        rootSpan.textContent = 'Music';
+        rootSpan.addEventListener('click', () => { musicPath = []; renderMusic(); });
+        musicCrumbs.appendChild(rootSpan);
+        musicPath.forEach((seg, idx) => {
+          const sep = document.createElement('span'); sep.className = 'sep'; sep.textContent = '›'; musicCrumbs.appendChild(sep);
+          const s = document.createElement('span'); s.textContent = seg; s.addEventListener('click', () => { musicPath = musicPath.slice(0, idx + 1); renderMusic(); });
+          musicCrumbs.appendChild(s);
+        });
+
+        // Grid or file
+        musicGrid.innerHTML = '';
+        musicFile.classList.add('hidden');
+        if (node.type === 'file') {
+          musicFile.textContent = node.content;
+          musicFile.classList.remove('hidden');
+          return;
+        }
+        (node.children || []).forEach(child => {
+          const tile = document.createElement('div');
+          tile.className = 'tile';
+          tile.textContent = child.name + (child.type === 'folder' ? '/' : '');
+          tile.addEventListener('click', () => {
+            musicPath = [...musicPath, child.name];
+            renderMusic();
+          });
+          musicGrid.appendChild(tile);
+        });
+      }
+
+      // Initialize Music view on first open
+      let musicLoaded = false;
+      function ensureMusicLoaded() {
+        if (musicLoaded) return;
+        musicLoaded = true;
+        renderMusic();
+      }
+      document.querySelector('[data-app="music"]').addEventListener('click', () => { openApp('music'); ensureMusicLoaded(); });
+      document.getElementById('task-music').addEventListener('click', () => { openApp('music'); ensureMusicLoaded(); });
+
+    })();
+  </script>
+</body>
+</html>
