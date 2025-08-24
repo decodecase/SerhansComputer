@@ -1,0 +1,13 @@
+From: Finance Department <finance@classicalistanbul.com>
+To: Serhan Ekim <s.ekim@composer.org>
+Date: 5 March 2024
+Subject: Payment Reminder – Overdue Invoice
+
+Dear Mr. Ekim,
+
+This is a polite reminder that your invoice dated 1 February 2024 (INV-732) is still outstanding. 
+
+Please arrange for payment as soon as possible. Let us know if there are any issues.
+
+Regards,  
+Accounts

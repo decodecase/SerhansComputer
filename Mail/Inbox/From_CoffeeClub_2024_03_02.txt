@@ -1,0 +1,16 @@
+From: CoffeeClub <hello@coffeeclub.co.uk>
+To: Serhan Ekim <s.ekim@composer.org>
+Date: 2 March 2024
+Subject: Your beans are on the way!
+
+Dear Serhan,
+
+Your monthly coffee subscription has shipped!
+
+This month’s selection includes:
+- Tanzanian Peaberry Dark Roast  
+- Colombian Honey-Washed Arabica  
+
+We hope the aroma inspires your next masterpiece.
+
+– CoffeeClub Roastery
