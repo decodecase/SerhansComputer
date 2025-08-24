@@ -1,0 +1,33 @@
+
+Title: The Final Note
+Composer: S. E.
+Key: D minor
+Time Signature: 4/4
+Tempo: Adagio (♩ = 66)
+Instrumentation: Solo Piano
+
+[Measure 1]    P - G     D     Bb	C
+[Measure 2]    A - E     A     F	G
+[Measure 3]    C - E     G     D	(rest)
+[Measure 4]    S - D     F     E	C
+[Measure 5]    R - A     G     F	(rest)
+[Measure 6]    S - A     A     D	C
+[Measure 7]    I - E     B     D	G
+[Measure 8]    G - G     F     E	(rest)
+[Measure 9]    S - C     E     F	E
+[Measure 10]   F - D     A     Bb	C 
+[Measure 11]   I - F     E     D	A
+[Measure 12]   G - B     D     F	(rest)
+[Measure 13]   N - A     C     D	A
+[Measure 14]   B - E     G     G	(rest)
+[Measure 15]   A - G     A     A    	E
+[Measure 16]   L - D     C     Bb	D
+[Measure 17]   N - F     A     G	C
+[Measure 18]   O - E     D     A	B
+[Measure 19]   T - A     G     G	F
+[Measure 20]   E - D     C     B	A
+
+
+Lyrics beneath final bar:
+"Only those who read the first note of every bar
+will hear what silence says."
